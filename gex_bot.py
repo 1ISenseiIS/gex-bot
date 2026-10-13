@@ -2,10 +2,12 @@ import os, sys, datetime as dt, time, traceback, requests
 import numpy as np, pandas as pd, yfinance as yf
 
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
-# AQUI ESTAN LOS 2 SIMBOLOS - Si quieres agregar ES, solo agrega una linea
+
+# AQUI ESTAN TUS 3 MERCADOS - Si quieres borrar uno, borra la linea
 SYMBOLS = {
     "NQ": ("QQQ", "NQ=F", 0.25),
     "GC": ("GLD", "GC=F", 0.10),
+    "ES": ("SPY", "ES=F", 0.25),
 }
 TOP = 8
 
@@ -19,7 +21,7 @@ h, m = now_et.hour, now_et.minute
 MAPA = "Futures Open" if h >= 18 else "Midnight Open" if h < 9 or (h==9 and m<30) else "New York Open"
 
 def get_spot(ticker):
-    FALLBACK = {"QQQ":520,"NQ=F":30800,"GLD":340,"GC=F":4191}
+    FALLBACK = {"QQQ":520,"NQ=F":30800,"GLD":340,"GC=F":4191,"SPY":580,"ES=F":6000}
     try:
         tk=yf.Ticker(ticker)
         hist=tk.history(period="5d", auto_adjust=False)
@@ -101,14 +103,14 @@ for SYMBOL, (PROXY, FUT, TICK) in SYMBOLS.items():
                 taken.add(round(float(k),2))
 
         scale=fut_price/spot if spot else 1.0
-        if np.isnan(scale) or scale==0: scale=12.3 if SYMBOL=="GC" else 60
+        if np.isnan(scale) or scale==0: scale=12.3 if SYMBOL=="GC" else 10 if SYMBOL=="NQ" else 10
         pine_line=",".join([f"{k}={round(round(v*scale/TICK)*TICK,2):.2f}:{'A' if k in ['CR','PS','ZP','ZC','G1'] else 'M'}" for k,v in lv.items()])
         print(pine_line)
 
         if WEBHOOK_URL and "discord.com" in WEBHOOK_URL:
-            embed={"title": f"GEX ENGINE | {SYMBOL} | {MAPA}", "description": f"**{PROXY}: {spot:.2f} | {FUT}: {fut_price:.2f}**\n\n**COPIA PARA TRADINGVIEW [{MAPA}]:**\n```{pine_line}```", "color": 16711816 if SYMBOL=="NQ" else 16766720}
+            embed={"title": f"GEX ENGINE | {SYMBOL} | {MAPA}", "description": f"**{PROXY}: {spot:.2f} | {FUT}: {fut_price:.2f}**\n\n**COPIA PARA TRADINGVIEW [{MAPA}]:**\n```{pine_line}```", "color": 16711816 if SYMBOL=="NQ" else 16766720 if SYMBOL=="GC" else 3447003}
             requests.post(WEBHOOK_URL, json={"embeds":[embed]}, timeout=15)
-            time.sleep(1)
+            time.sleep(2)
 
     except Exception as e:
         print(f"Error {SYMBOL}: {e}")
