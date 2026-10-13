@@ -1,0 +1,19 @@
+name: GEX NQ Bot
+on:
+  schedule:
+    - cron: '0 22 * * 1-5'
+    - cron: '0 4 * * 2-6'
+    - cron: '30 13 * * 1-5'
+  workflow_dispatch:
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - run: pip install yfinance pandas numpy requests
+      - run: python gex_bot.py
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
