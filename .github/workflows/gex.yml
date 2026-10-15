@@ -13,8 +13,10 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
-      - run: |
-          pip install yfinance pandas numpy requests lxml tzdata
+      - run: pip install yfinance pandas numpy requests lxml tzdata matplotlib
       - run: python gex_bot.py
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+      - run: python gex_heatmap.py
         env:
           WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
